@@ -41,6 +41,7 @@ setup(
         'requests',
         's3fs',
         'duckdb',
-        'pandas'
+        'pandas',
+        'matplotlib'
     ],    
 )

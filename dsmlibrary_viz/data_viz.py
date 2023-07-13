@@ -1,6 +1,7 @@
 import re
 import duckdb
 from . import base
+import pandas as pd
 
 class DataViz(base.Base):
     
@@ -15,7 +16,23 @@ class DataViz(base.Base):
         match = match.group()
         _file_id = match.split(':')[-1]
         meta = self.get_meta_file(file_id=_file_id)
-        return f"s3://dataplatform/{meta.get('s3_key')}/*.parquet"
+        osd_key = meta.get('s3_key')
+        return f"s3://dataplatform/{osd_key}/*.parquet"
+    
+    def _find_fileID2(self, match):
+        match = match.group()
+        _file_id = match.split(':')[-1]
+        meta = self.get_meta_file(file_id=_file_id)
+        osd_key = meta.get('s3_key')
+        return f"s3://dataplatform/{osd_key}/*/*.parquet"
+    
+    def _find_fileID3(self, match):
+        match = match.group()
+        _file_id = match.split(':')[-1]
+        meta = self.get_meta_file(file_id=_file_id)
+        osd_key = meta.get('s3_key')
+        return f"s3://dataplatform/{osd_key}/*/*/*.parquet"
+
 
     def _query(self, query_str):
         _storage_options = self._storage_options
@@ -28,9 +45,19 @@ class DataViz(base.Base):
         SET s3_use_ssl=false;
         {query_str}
         """
-        query = re.sub("DISCOVERY:\d*", self._find_fileID, query)
-        return query
+        return [
+            re.sub("DISCOVERY:\d*", self._find_fileID, query),
+            re.sub("DISCOVERY:\d*", self._find_fileID2, query),
+            re.sub("DISCOVERY:\d*", self._find_fileID3, query)
+        ]
 
     def query(self, query_str):
-        query = self._query(query_str)
-        return duckdb.sql(query).to_df()
+        querys = self._query(query_str)
+        for query in querys:
+            try:
+                output = duckdb.sql(query).to_df()
+            except Exception as e:
+                pass
+            else:
+                return output
+        return pd.DataFrame()
