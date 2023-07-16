@@ -6,10 +6,7 @@ import pandas as pd
 class DataViz(base.Base):
     
     def __init__(self, token=None, verbose=True, dataplatform_api_uri=None, object_storage_uri=None, apikey=None):
-        try:
-            duckdb.sql("install 'httpfs';")
-        except Exception as e:
-            pass
+        duckdb.sql("install 'httpfs';")
         super().__init__(token, verbose, dataplatform_api_uri, object_storage_uri, apikey)
 
     def _find_fileID(self, match):
@@ -53,11 +50,12 @@ class DataViz(base.Base):
 
     def query(self, query_str):
         querys = self._query(query_str)
+        err = None
         for query in querys:
             try:
                 output = duckdb.sql(query).to_df()
             except Exception as e:
-                pass
+                err = e
             else:
                 return output
-        return pd.DataFrame()
+        return err

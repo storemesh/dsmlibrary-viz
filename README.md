@@ -18,6 +18,7 @@ dataviz = DataViz(
 data = dataviz.query(
 """
     SELECT * FROM 'DISCOVERY:<FILE_ID>'
+    LIMIT 10
 """ 
 )
 print(data)
